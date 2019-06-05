@@ -33,8 +33,10 @@ def jdjs(cj):
 def cj_num_max(list):
     if list[-4] == None:
         zkcj = 0
+    elif list[-4] in cjdzb.keys():
+        zkcj = cjdzb[list[-4]]
     else:
-        zkcj = list[-4]
+        zkcj = float(list[-4])
 
     if list[-3] == None:
         bkcj = 0
@@ -94,8 +96,15 @@ def audit_conn():
 
     cur = conn.cursor()
     '''
+    创建保存成绩统计信息的字典bys_re {'xh':'[(学生基本信息)],{学生成绩信息}'}
+    例子：
+    2015002472
+    [(2019, '杨思谣', '女', '中东欧语学院', '俄语', '俄语1503', '是', None),
+    {'jd': 0, 'gk': 0, 'tyk': 0, 'ggbxk': 0, 'zybxk': 0, 'gxk': 0, 'gxkxf': 0, 'zxk': 0, 'zxkxf': 0, 'zhjnxf': 0, 'sjhj': 0, 'kcxfjd': 0, 'zxf': 0}]
+
+
     含不在校生
-    GRA_JBXB: SELECT XH,DQSZJ+XZ BYSJ,XM,XB,XY,ZYMC,XZB FROM XSJBXXB WHERE sfzx='是' and 
+    GRA_JBXXB: SELECT XH,DQSZJ+XZ BYSJ,XM,XB,XY,ZYMC,XZB FROM XSJBXXB WHERE sfzx='是' and 
               DQSZJ + XZ = (select (case when to_number(to_char(sysdate,'MM')) <=7 then to_number(to_char(sysdate,'YYYY')) 
               else to_number(to_char(sysdate,'YYYY'))+1 end ) from dual) ORDER BY XY,ZYMC,XZB,SFZX,XH
     '''
@@ -139,6 +148,9 @@ def audit_conn():
         if bys_xx[0][4] not in zydmb[bys_xx[0][3]]:
             zydmb[bys_xx[0][3]].append(bys_xx[0][4])
 
+
+
+
     aud_crl_conn.configure(text='连接成功')  # 设置button显示的内容
     aud_crl_conn.configure(state='disabled')  # 将按钮设置为灰色状态，不可使用状态
     aud_crl_sh.configure(state='normal')  # 暂时设为灰色，查询成功后显示
@@ -152,9 +164,17 @@ def audit_choosezy(ev=None):
 
 def begin_audit(ev=None):
     """毕业资格审核-开始审核"""
-    global aud_crl_xyc, aud_crl_zyc, cjdzb, xsjbxxb, bys_re, aud_crl_sc, zydmb, xyxz, zymc, aud_crl_sh, var_sh, root, xymc, standard, Error_data, aud_crl_treev
+    global aud_crl_xyc, aud_crl_zyc, cjdzb, xsjbxxb, aud_crl_sc, zydmb, xyxz, zymc, aud_crl_sh, var_sh, root, xymc, standard, Error_data, aud_crl_treev, bys_re
     aud_crl_sh.configure(state='disable')
     aud_crl_sc.configure(state='disable')
+
+    """bys_re中的成绩信息归零"""
+    for person in bys_re.values():
+        for cj_data in person[1].keys():
+            person[1][cj_data] = 0
+
+
+
     xymc = []
     zymc = []
     xyxz = 1
@@ -180,9 +200,17 @@ def begin_audit(ev=None):
     standard['gxk'] = aud_crl_txs.get()
     standard['gxkxf'] = aud_crl_txxfs.get()
     standard['zxk'] = aud_crl_zxs.get()
-    standard['zxkxf'] = aud_crl_zxxfs.get()
+    # standard['zxkxf'] = aud_crl_zxxfs.get()
+    if aud_crl_zxxfe.get() == "":
+        standard['zxkxf'] = 0
+    else:
+        standard['zxkxf'] = aud_crl_zxxfe.get()
     standard['zhjnxf'] = aud_crl_zjs.get()
     standard['sjhj'] = aud_crl_sjs.get()
+
+
+
+
 
     # def begin_audit2(ev=None):
     #     global aud_crl_xyc, aud_crl_zyc, cjdzb, xsjbxxb, bys_re, aud_crl_sc, zydmb, xyxz, zymc, aud_crl_sh, var_sh, root
@@ -190,7 +218,15 @@ def begin_audit(ev=None):
     load = 0
     conn = cx_Oracle.connect('zfxfzb/zfsoft_hqwy@orcl')
     cur = conn.cursor()
-    # 含不在校生 sql_cjb = r"SELECT XH,XKKH,KCMC,KCXZ,XF,(case when zscj is not null then zscj else round(cj,1) end),BKCJ,CXCJ,CXBJ FROM CJB WHERE XH IN (SELECT XH FROM XSJBXXB WHERE DQSZJ + XZ = (select (case when to_number(to_char(sysdate,'MM')) <=7 then to_number(to_char(sysdate,'YYYY')) else to_number(to_char(sysdate,'YYYY'))+1 end ) from dual)) AND (FXBJ IS NULL OR FXBJ = '0')"
+    """
+    含不在校生 
+    sql_cjb = r"CREATE OR REPLACE VIEW GRA_CJB AS
+                SELECT XH,XKKH,KCMC,KCXZ,XF,CJ ZKCJ,BKCJ,CXCJ,CXBJ FROM CJB WHERE XH IN
+                (SELECT XH FROM XSJBXXB WHERE sfzx='是' and 
+                DQSZJ + XZ = (select (case when to_number(to_char(sysdate,'MM')) <=7 
+                then to_number(to_char(sysdate,'YYYY')) 
+                else to_number(to_char(sysdate,'YYYY'))+1 end ) from dual)) AND (FXBJ IS NULL OR FXBJ = '0')"
+    """
     sql_cjb = r"SELECT * FROM GRA_CJB"
     cur.execute(sql_cjb)
     for cjb_row in cur:
@@ -201,7 +237,7 @@ def begin_audit(ev=None):
                                   '专业基础必修课', '专业选修课'):
                     bys_re[cjb_row[0]][1]['zxf'] += float(cjb_row[4])
         if cj_num_max(cjb_row) > 0:
-            if re.match('(健康悦跑(俱乐部)?|健美操|毽球|篮球|轮滑|排球|攀岩|乒乓球|跆拳道|体育|网球|游泳|瑜伽|羽毛球|足球)[1-8]?|体质健康课|田径训练队|武术训练队|康复保健',
+            if re.match('(搏击操|健康悦跑|健美操|毽球|篮球|轮滑|排球|攀岩|乒乓球|跆拳道|体育|网球|游泳|瑜伽|羽毛球|足球)(俱乐部|训练队)?[1-8]?|体质健康课|田径训练队|武术训练队|康复保健',
                         cjb_row[2]):
                 bys_re[cjb_row[0]][1]['tyk'] += 1
             elif cjb_row[2] == '办公自动化':
@@ -251,7 +287,6 @@ def begin_audit(ev=None):
         # aud_crl_sh.configure(state='normal')
         aud_crl_sc.configure(state='normal')  # 暂时设为灰色，查询成功后显示
 
-    # print(bys_re)
 
     """将有问题的学生信息根据Input的学院和专业进行筛选，最终得到要显示出来的学号列表Error_data_xh"""
     if xyxz == 0:
@@ -290,6 +325,11 @@ def begin_audit(ev=None):
     # 将新数据放入Treeview
     for s in Error_data_op:
         aud_crl_treev.insert('', s[0], text=s[0], values=s[0:])
+
+
+
+    # for a, b in bys_re.items():
+    #     print(a,b)
 
 
 def audit_toexcel():
@@ -503,7 +543,7 @@ def audit_toexcel():
                 # result['P' + str(one_row)].font = font
             one_row += 1
         # 专选学分
-        elif float(alldata['Q' + str(two_row)].value) < standard['zxkxf']:
+        elif float(alldata['Q' + str(two_row)].value) < float(standard['zxkxf']):
             for onetwo_column in range(2, alldata.max_column - 1):
                 result['A' + str(one_row)] = one_row - 1
                 result[get_column_letter(onetwo_column) + str(one_row)] = alldata[
@@ -543,8 +583,8 @@ def audit_toexcel():
             fail['gk'] += 1
     for one_column in range(11, 21):
         for one_ro in range(2, result.max_row + 1):
-            if float(result[get_column_letter(one_column) + str(one_ro)].value) < standard[
-                standard_keys[one_column - 9]]:
+            if float(result[get_column_letter(one_column) + str(one_ro)].value) < float(standard[
+                standard_keys[one_column - 9]]):
                 result[get_column_letter(one_column) + str(one_ro)].font = font
                 fail[standard_keys[one_column - 9]] += 1
 
@@ -658,6 +698,9 @@ def audit_toexcel():
     aud_crl_otext.pack()
 
     aud_crl_sh.configure(state='normal')
+
+
+
 
 def audit_lookforError(conn):
     """毕业资格审核-将成绩中有cxbj=1并且重复kcdm的学生筛选出来，放在list Error_data中，没有连接数据库的步骤"""
@@ -957,10 +1000,13 @@ aud_crl_tx = tk.LabelFrame(audit_box31, text='通选课门数', font=s_font)
 aud_crl_txs = tk.Scale(aud_crl_tx, from_=0, to=4, orient=tk.HORIZONTAL)
 aud_crl_txxf = tk.LabelFrame(audit_box31, text='通选课学分', font=s_font)
 aud_crl_txxfs = tk.Scale(aud_crl_txxf, from_=0, to=6, orient=tk.HORIZONTAL)
+
 aud_crl_zx = tk.LabelFrame(audit_box32, text='专选课门数', font=s_font)
 aud_crl_zxs = tk.Scale(aud_crl_zx, from_=8, to=20, orient=tk.HORIZONTAL)
 aud_crl_zxxf = tk.LabelFrame(audit_box32, text='专选课学分', font=s_font)
-aud_crl_zxxfs = tk.Scale(aud_crl_zxxf, from_=8, to=20, orient=tk.HORIZONTAL)
+# aud_crl_zxxfs = tk.Scale(aud_crl_zxxf, from_=8, to=20, orient=tk.HORIZONTAL)
+varr = tk.StringVar()
+aud_crl_zxxfe = tk.Entry(aud_crl_zxxf, bd=2, textvariable=varr)
 aud_crl_zj = tk.LabelFrame(audit_box32, text='综合技能训练', font=s_font)
 aud_crl_zjs = tk.Scale(aud_crl_zj, from_=0, to=6, orient=tk.HORIZONTAL)
 aud_crl_sj = tk.LabelFrame(audit_box32, text='实践环节', font=s_font)
@@ -977,7 +1023,7 @@ aud_crl_sjs.pack(padx=2, side=tk.LEFT)
 aud_crl_zx.pack(padx=2, side=tk.LEFT)
 aud_crl_zxs.pack(padx=2, side=tk.LEFT)
 aud_crl_zxxf.pack(padx=2, side=tk.LEFT)
-aud_crl_zxxfs.pack(padx=2, side=tk.LEFT)
+aud_crl_zxxfe.pack(padx=2, pady=10, side=tk.LEFT)
 aud_crl_tx.pack(padx=2, side=tk.LEFT)
 aud_crl_txs.pack(padx=2, side=tk.LEFT)
 aud_crl_txxf.pack(padx=2, side=tk.LEFT)
