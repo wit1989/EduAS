@@ -77,6 +77,7 @@ def treeview_sort_column(tv, col, reverse):
     tv.heading(col,
                command=lambda: treeview_sort_column(tv, col, not reverse))
 
+
 # 1、功能函数
 
 def audit_conn():
@@ -120,12 +121,10 @@ def audit_conn():
     j = cur.execute(sql_xsjbxxb).fetchone()[1]  # 用于获取毕业年份
     cur.close()
 
-
     """筛选数据存在问题的学生，放入Erro_data"""
     Error_data = audit_lookforError(conn)
 
     conn.close()
-
 
     xydmb = {}
     xydmbs = []
@@ -148,9 +147,6 @@ def audit_conn():
         if bys_xx[0][4] not in zydmb[bys_xx[0][3]]:
             zydmb[bys_xx[0][3]].append(bys_xx[0][4])
 
-
-
-
     aud_crl_conn.configure(text='连接成功')  # 设置button显示的内容
     aud_crl_conn.configure(state='disabled')  # 将按钮设置为灰色状态，不可使用状态
     aud_crl_sh.configure(state='normal')  # 暂时设为灰色，查询成功后显示
@@ -172,8 +168,6 @@ def begin_audit(ev=None):
     for person in bys_re.values():
         for cj_data in person[1].keys():
             person[1][cj_data] = 0
-
-
 
     xymc = []
     zymc = []
@@ -208,10 +202,6 @@ def begin_audit(ev=None):
     standard['zhjnxf'] = aud_crl_zjs.get()
     standard['sjhj'] = aud_crl_sjs.get()
 
-
-
-
-
     # def begin_audit2(ev=None):
     #     global aud_crl_xyc, aud_crl_zyc, cjdzb, xsjbxxb, bys_re, aud_crl_sc, zydmb, xyxz, zymc, aud_crl_sh, var_sh, root
     num = 1
@@ -227,7 +217,7 @@ def begin_audit(ev=None):
                 then to_number(to_char(sysdate,'YYYY')) 
                 else to_number(to_char(sysdate,'YYYY'))+1 end ) from dual)) AND (FXBJ IS NULL OR FXBJ = '0')"
     """
-    sql_cjb = r"SELECT * FROM GRA_CJB"
+    sql_cjb = r"SELECT * FROM GRA_CJB WHERE KCMC IS NOT NULL"
     cur.execute(sql_cjb)
     for cjb_row in cur:
         if cj_num_max(cjb_row) == 0:
@@ -237,8 +227,9 @@ def begin_audit(ev=None):
                                   '专业基础必修课', '专业选修课'):
                     bys_re[cjb_row[0]][1]['zxf'] += float(cjb_row[4])
         if cj_num_max(cjb_row) > 0:
-            if re.match('(搏击操|健康悦跑|健美操|毽球|篮球|轮滑|排球|攀岩|乒乓球|跆拳道|体育|网球|游泳|瑜伽|羽毛球|足球)(俱乐部|训练队)?[1-8]?|体质健康课|田径训练队|武术训练队|康复保健',
-                        cjb_row[2]):
+            if re.match(
+                    '(搏击操|健康悦跑|健美操|毽球|篮球|轮滑|排球|攀岩|乒乓球|跆拳道|体育|网球|游泳|瑜伽|羽毛球|足球)(俱乐部|训练队)?[1-8]?|体质健康课|田径训练队|武术训练队|康复保健',
+                    cjb_row[2]):
                 bys_re[cjb_row[0]][1]['tyk'] += 1
             elif cjb_row[2] == '办公自动化':
                 bys_re[cjb_row[0]][1]['bgzdh'] += 1
@@ -287,7 +278,6 @@ def begin_audit(ev=None):
         # aud_crl_sh.configure(state='normal')
         aud_crl_sc.configure(state='normal')  # 暂时设为灰色，查询成功后显示
 
-
     """将有问题的学生信息根据Input的学院和专业进行筛选，最终得到要显示出来的学号列表Error_data_xh"""
     if xyxz == 0:
         Error_data_xh = [err[0] for err in Error_data]
@@ -296,7 +286,6 @@ def begin_audit(ev=None):
         for err in Error_data:
             if err[-1] in zymc:
                 Error_data_xh.append(err[0])
-
 
     """根据Error_data_xh找到学生的全部要显示信息放到Error_data_op中"""
 
@@ -311,8 +300,6 @@ def begin_audit(ev=None):
         student.append(bys_re[std][1]['gk'])
         Error_data_op.append(student)
 
-
-
     print(Error_data_op)
 
     # print(Error_data_xh)
@@ -325,8 +312,6 @@ def begin_audit(ev=None):
     # 将新数据放入Treeview
     for s in Error_data_op:
         aud_crl_treev.insert('', s[0], text=s[0], values=s[0:])
-
-
 
     # for a, b in bys_re.items():
     #     print(a,b)
@@ -471,7 +456,7 @@ def audit_toexcel():
     fail = {'jd': 0, 'gk': 0, 'tyk': 0, 'ggbxk': 0, 'zybxk': 0, 'gxk': 0, 'gxkxf': 0, 'zxk': 0, 'zxkxf': 0, 'bgzdh': 0,
             'zhjnxf': 0, 'sjhj': 0}
 
-    font = Font(color=colors.RED)
+    font = Font(color='FFFF0000')
 
     one_row = 2
     for two_row in range(2, alldata.max_row + 1):
@@ -584,7 +569,8 @@ def audit_toexcel():
     for one_column in range(11, 21):
         for one_ro in range(2, result.max_row + 1):
             if float(result[get_column_letter(one_column) + str(one_ro)].value) < float(standard[
-                standard_keys[one_column - 9]]):
+                                                                                            standard_keys[
+                                                                                                one_column - 9]]):
                 result[get_column_letter(one_column) + str(one_ro)].font = font
                 fail[standard_keys[one_column - 9]] += 1
 
@@ -698,8 +684,6 @@ def audit_toexcel():
     aud_crl_otext.pack()
 
     aud_crl_sh.configure(state='normal')
-
-
 
 
 def audit_lookforError(conn):
@@ -853,7 +837,6 @@ def outtoexcel():
     out_end_text.pack(fill='both', expand=1, padx=2, pady=2, side=tk.BOTTOM)
 
 
-
 def grainfo_connDB():
     """毕业证/学位证号查询-连接数据库"""
     global gra_info, grainfo_crl1, grainfo_yeart
@@ -947,7 +930,7 @@ root = tk.Tk()
 root.title('吉林外国语大学——教务管理系统补充程序')
 root.columnconfigure(0, weight=1)
 root.rowconfigure(0, weight=1)
-root.iconbitmap(default=r'C:\Users\Administrator\Desktop\dogat.ico')
+# root.iconbitmap(default=r'C:\Users\Administrator\Desktop\dogat.ico')
 # 4、底层控件frm
 frm = tk.Frame(root)
 frm.pack(fill="both", expand=1)
@@ -1044,14 +1027,13 @@ aud_crl_sc.pack(fill='both', padx=2, pady=5)
 aud_crl_sh.configure(state='disable')  # 暂时设为灰色，查询成功后显示
 aud_crl_sc.configure(state='disable')  # 暂时设为灰色，查询成功后显示
 
-
 audit_box5 = tk.LabelFrame(audit_box0, text='有问题的数据（请根据成绩总表进行复核）：', font=g_font)
 audit_box5.pack(fill="both", expand=1, padx=2)
 aud_crl_treev = ttk.Treeview(audit_box5, height=5, show="headings", columns=('xy', 'xh', 'xm', 'xzb', 'jd', 'gk'))
 """点击字段排序"""
 for col in ('xy', 'xh', 'xm', 'xzb', 'jd', 'gk'):
     aud_crl_treev.heading(col, text=col,
-                     command=lambda c=col: treeview_sort_column(aud_crl_treev, c, False))
+                          command=lambda c=col: treeview_sort_column(aud_crl_treev, c, False))
 
 aud_crl_treev.pack(side=tk.LEFT)
 aud_crl_treev.heading('xh', text='学号')  # 设置字段的显示名称
@@ -1194,12 +1176,10 @@ resultForms = ttk.Treeview(grainfo_box3, height=5, show="headings",
                            columns=('xh', 'xm', 'xzb', 'rxrq', 'sfzh', 'byzh',
                                     'xwzh'))  # height控件高度，show=隐藏Treeview中的首列 column设置字段
 
-
 """点击字段排序"""
 for col in ('xh', 'xm', 'xzb', 'rxrq', 'sfzh', 'byzh', 'xwzh'):
     resultForms.heading(col, text=col,
-                     command=lambda c=col: treeview_sort_column(resultForms, c, False))
-
+                        command=lambda c=col: treeview_sort_column(resultForms, c, False))
 
 resultForms.pack(side=tk.LEFT)
 resultForms.heading('xh', text='学号')  # 设置字段的显示名称
