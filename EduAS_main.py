@@ -235,6 +235,9 @@ def begin_audit(ev=None):
                 bys_re[cjb_row[0]][1]['bgzdh'] += 1
             elif cjb_row[3] == '综合技能训练':
                 bys_re[cjb_row[0]][1]['zhjnxf'] += float(cjb_row[4])
+                # if cjb_row[0] == '2016001034':
+                #     print(cjb_row, float(cjb_row[4]))
+
             elif cjb_row[3] in ('通识选修课', '公共选修课'):
                 bys_re[cjb_row[0]][1]['gxk'] += 1
                 bys_re[cjb_row[0]][1]['gxkxf'] += float(cjb_row[4])
@@ -330,7 +333,7 @@ def audit_toexcel():
     col = 1
     for tit in ('序号', '学号', '毕业时间', '姓名', '性别', '学院', '专业名称', '行政班', '绩点',
                 '挂科门数(不含公选)', '体育课通过门数', '公共必修课通过门数', '专业必修课通过门数', '公选课通过门数',
-                '公选课获得学分', '专选课通过门数', '专选课获得学分', '办公自动化', '综合技能训练通过门数(不含办公自动化)', '实践环节'):
+                '公选课获得学分', '专选课通过门数', '专选课获得学分', '办公自动化', '综合技能训练学分(不含办公自动化)', '实践环节'):
         alldata[get_column_letter(col) + '1'] = tit
         result[get_column_letter(col) + '1'] = tit
         col += 1
@@ -576,7 +579,7 @@ def audit_toexcel():
 
     # 不合格数据统计
     row_last = result.max_row  # 数据的最后一行
-    result['H' + str(row_last + 1)] = '不合格人数统计：'
+    result['H' + str(row_last + 1)] = '不合格人数'
     column_last = 9
     for fail_value in fail.values():
         result[get_column_letter(column_last) + str(row_last + 1)] = fail_value
@@ -621,7 +624,7 @@ def audit_toexcel():
     chart1.title = "不合格人数统计图"
     # chart1.y_axis.title = '不合格人数'
     chart1.x_axis.title = '审核项目'
-    chart1.width = 25
+    chart1.width = 26
     chart1.height = 8
     result.add_chart(chart1, 'B' + str(row_last + 4))
 
@@ -656,7 +659,7 @@ def audit_toexcel():
     chart2.x_axis.title = '绩点(含前不含后)'
     chart2.width = 15.5
     chart2.height = 8
-    result.add_chart(chart2, 'L' + str(row_last + 4))
+    result.add_chart(chart2, 'M' + str(row_last + 4))
 
     # 保存EXCEL，并判断重名，重名则后面加(n)
     # 如果学院选择了全校，则命名为“全校xx年毕业资格审核结果.xlsx"，否则命名为"学院、学院xx年毕业资格审核结果.xlsx"
